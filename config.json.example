@@ -1,0 +1,9 @@
+{
+    "port": ":8082",
+    "proxyConfig": [
+        {
+            "urlStr":"http://bing.com",
+            "prefix":"/bing/"
+        }
+    ]
+}
