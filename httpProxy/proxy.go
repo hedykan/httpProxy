@@ -44,6 +44,7 @@ func GoReverseProxy(remote *url.URL, prefix string) *httputil.ReverseProxy {
 	return proxy
 }
 
+// 修改响应头构造函数
 func modifyResponseFunc() func(*http.Response) error {
 	return func(response *http.Response) error {
 		response.Header.Add("Access-Control-Allow-Origin", "*")
