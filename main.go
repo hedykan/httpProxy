@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"httpProxy/httpProxy"
+	"httpProxy/proxy"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
 	Port        string
-	ProxyConfig []httpProxy.ProxyConfig
+	ProxyConfig []proxy.ProxyConfig
 }
 
 func getConfig(configPath string) (Config, error) {
@@ -29,5 +29,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	httpProxy.Serve(conf.ProxyConfig, conf.Port)
+	proxy.Serve(conf.ProxyConfig, conf.Port)
 }

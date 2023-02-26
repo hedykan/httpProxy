@@ -1,4 +1,4 @@
-package httpProxy
+package proxy
 
 import (
 	"log"
@@ -15,6 +15,7 @@ type ProxyConfig struct {
 
 func Serve(config []ProxyConfig, port string) {
 	mux := http.NewServeMux()
+	// var handleArr httpHelper.HandleArr
 
 	for _, v := range config {
 		remote, err := url.Parse(v.UrlStr)
@@ -22,9 +23,17 @@ func Serve(config []ProxyConfig, port string) {
 			panic(err)
 		}
 		proxy := GoReverseProxy(remote, v.Prefix)
+
 		mux.Handle(v.Prefix, proxy)
+		// handleArr = append(handleArr, httpHelper.Handle{
+		// 	Url:     v.Prefix,
+		// 	Handler: proxy,
+		// })
+
 		log.Println("proxy:", v.Prefix, v.UrlStr)
 	}
+
+	// httpHelper.SetMuxHandle(mux, handleArr)
 
 	log.Println("listen:", port[1:])
 	err := http.ListenAndServe(port, mux)
@@ -47,7 +56,7 @@ func GoReverseProxy(remote *url.URL, prefix string) *httputil.ReverseProxy {
 // 修改响应头构造函数
 func modifyResponseFunc() func(*http.Response) error {
 	return func(response *http.Response) error {
-		response.Header.Add("Access-Control-Allow-Origin", "*")
+		// response.Header.Add("Access-Control-Allow-Origin", "*")
 		return nil
 	}
 }
