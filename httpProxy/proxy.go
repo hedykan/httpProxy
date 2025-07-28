@@ -6,11 +6,35 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"time"
+
+	distributed "github.com/hedykan/go-distributedutil"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type ProxyConfig struct {
-	UrlStr string
-	Prefix string
+	UrlStr      string
+	Prefix      string
+	ServiceName string
+}
+
+var node *distributed.DistributedNode
+var client *clientv3.Client
+
+func init() {
+	etcdEndpoints := "localhost:2379"
+	var err error
+
+	client, err = clientv3.New(clientv3.Config{
+		Endpoints:   []string{etcdEndpoints},
+		DialTimeout: 5 * time.Second,
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	node = distributed.NewNode("http-proxy")
+	node.RegisterService(client, ":8083")
 }
 
 func Serve(config []ProxyConfig, port string) {
@@ -21,7 +45,7 @@ func Serve(config []ProxyConfig, port string) {
 		if err != nil {
 			panic(err)
 		}
-		proxy := GoReverseProxy(remote, v.Prefix)
+		proxy := GoReverseProxy(remote, v.Prefix, v.ServiceName)
 		mux.Handle(v.Prefix, proxy)
 		log.Println("proxy:", v.Prefix, v.UrlStr)
 	}
@@ -33,11 +57,11 @@ func Serve(config []ProxyConfig, port string) {
 	}
 }
 
-func GoReverseProxy(remote *url.URL, prefix string) *httputil.ReverseProxy {
+func GoReverseProxy(remote *url.URL, prefix string, serviceName string) *httputil.ReverseProxy {
 	proxy := httputil.NewSingleHostReverseProxy(remote)
 
 	// 配置管理器
-	proxy.Director = directorFunc(remote, prefix)
+	proxy.Director = directorFunc(remote, prefix, serviceName)
 	// 修改响应头
 	proxy.ModifyResponse = modifyResponseFunc()
 
@@ -53,12 +77,18 @@ func modifyResponseFunc() func(*http.Response) error {
 }
 
 // 管理器构造函数
-func directorFunc(remote *url.URL, prefix string) func(*http.Request) {
+func directorFunc(remote *url.URL, prefix string, serviceName string) func(*http.Request) {
 	return func(request *http.Request) {
+		path, ok := node.GetServicePath(serviceName, "")
+		targetPath := remote.Host
+		if ok {
+			targetPath = path
+		}
+
 		targetQuery := remote.RawQuery
 		request.URL.Scheme = remote.Scheme
-		request.URL.Host = remote.Host
-		request.Host = remote.Host
+		request.URL.Host = targetPath
+		request.Host = targetPath
 		request.URL.Path, request.URL.RawPath = joinURLPath(remote, request.URL)
 		// 替换前缀
 		request.URL.Path = strings.Replace(request.URL.Path, prefix, "/", 1)
