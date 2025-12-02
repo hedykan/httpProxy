@@ -13,7 +13,8 @@ ADD go.mod .
 ADD go.sum .
 RUN go mod download
 COPY . .
-RUN go build -ldflags="-s -w" -o /app/httpProxy ./main.go
+
+RUN go build -ldflags="-s -w" -o /app/main main.go
 
 
 FROM scratch
@@ -23,6 +24,7 @@ COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/S
 ENV TZ Asia/Shanghai
 
 WORKDIR /app
-COPY --from=builder /app/httpProxy /app/httpProxy
+COPY --from=builder /app/main /app/main
 
-CMD ["./httpProxy"]
+
+CMD ["./main"]

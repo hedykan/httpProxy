@@ -4,6 +4,9 @@ import (
 	"flag"
 	"httpProxy/httpProxy"
 
+	"net/http"
+	_ "net/http/pprof" // 自动注册 /debug/pprof/*
+
 	"github.com/spf13/viper"
 )
 
@@ -30,4 +33,10 @@ func main() {
 		panic(err)
 	}
 	httpProxy.Serve(conf.ProxyConfig, conf.Port)
+}
+
+func prof() {
+	go func() {
+		http.ListenAndServe(":6060", nil) // 独占端口，避免与业务路由冲突
+	}()
 }

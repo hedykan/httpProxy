@@ -33,8 +33,10 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	node = distributed.NewNode("http-proxy")
-	node.RegisterService(client, ":8083")
+	/*
+		 	node = distributed.NewNode("http-proxy")
+			node.RegisterService(client, ":8083")
+	*/
 }
 
 func Serve(config []ProxyConfig, port string) {
@@ -79,11 +81,11 @@ func modifyResponseFunc() func(*http.Response) error {
 // 管理器构造函数
 func directorFunc(remote *url.URL, prefix string, serviceName string) func(*http.Request) {
 	return func(request *http.Request) {
-		path, ok := node.GetServicePath(serviceName, "")
+		// path, ok := node.GetServicePath(serviceName, "")
 		targetPath := remote.Host
-		if ok {
-			targetPath = path
-		}
+		// if ok {
+		// 	targetPath = path
+		// }
 
 		targetQuery := remote.RawQuery
 		request.URL.Scheme = remote.Scheme
